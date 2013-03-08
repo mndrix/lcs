@@ -1,0 +1,18 @@
+---+ Synopsis
+
+==
+:- use_module(library(lcs)).
+
+go :-
+    lcs("1234", "12245334", "1234").
+==
+
+---+ Description
+
+Calculate the longest common subsequence of two lists.  This can be
+done by considering equal elements as common.  It can also be done
+by considering similar elements as common.  In the latter case, the
+developer defines a similarity metric for two arbitrary elements.
+
+@author Michael Hendricks <michael@ndrix.org>
+@license BSD
