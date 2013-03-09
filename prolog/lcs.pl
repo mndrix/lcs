@@ -22,6 +22,8 @@ lcs(A, B, LCS) :-
 
 fst(X-_, X).
 
+% Place to stored memoized lcs/5 results
+:- dynamic lcs_cache/3.
 
 %%	lcs(+Cmp:callable,+As:list,+Bs:list,-LCS:list,-Length) is det.
 %
@@ -37,24 +39,38 @@ fst(X-_, X).
 %	Implemented with memoization on top of a naive, exponential
 %	algorithm.  It performs fairly well, but patches to use a better
 %	algorithm are welcome.
-lcs(Cmp,[A|As],[B|Bs],LCS,Length) :-
+:- meta_predicate lcs(3,+,+,-,-).
+lcs(Cmp, As, Bs, LCS, Length) :-
+    retractall(lcs_cache(_,_,_)),
+    lcs_(Cmp,As,Bs,LCS,Length),
+    retractall(lcs_cache(_,_,_)).
+
+:- meta_predicate lcs_(3,+,+,-,-).
+lcs_(Cmp, As, Bs, LCS, Length) :-
+    term_hash((Cmp,As,Bs), Hash),
+    lcs_cache(Hash, LCS, Length),
+    !.
+lcs_(Cmp,[A|As],[B|Bs],LCS,Length) :-
     !,
     call(Cmp, A, B, Similarity),
-    lcs(Cmp,   As ,   Bs ,LCS_AB, Length_AB),
-    lcs(Cmp,   As ,[B|Bs],LCS_A,  Length_A),
-    lcs(Cmp,[A|As],   Bs ,LCS_B,  Length_B),
-    ( Length_AB >= Length_A, Length_AB >= Length_B ->
-        LCS = [A-B|LCS_AB],
-        Length is Similarity + Length_AB
-    ; Length_A >= Length_AB, Length_A >= Length_B ->
+    lcs_(Cmp,   As ,   Bs ,LCS_AB, Length_AB0),
+    lcs_(Cmp,   As ,[B|Bs],LCS_A,  Length_A),
+    lcs_(Cmp,[A|As],   Bs ,LCS_B,  Length_B),
+    Length_AB is Similarity + Length_AB0,
+    ( Length_A >= Length_AB, Length_A >= Length_B ->
         LCS = LCS_A,
         Length is Length_A
-    ; otherwise ->
+    ; Length_B >= Length_AB, Length_B >= Length_A ->
         LCS = LCS_B,
         Length is Length_B
-    ).
-lcs(_,[],_,[],0) :- !.
-lcs(_,_,[],[],0).
+    ; otherwise ->
+        LCS = [A-B|LCS_AB],
+        Length = Length_AB
+    ),
+    term_hash((Cmp,[A|As],[B|Bs]), Hash),
+    assert(lcs_cache(Hash, LCS, Length)).
+lcs_(_,[],_,[],0) :- !.
+lcs_(_,_,[],[],0).
 
 
 %%	equality_metric(+A, +B, -Similarity) is det.
