@@ -4,15 +4,25 @@
 :- use_module(library(lcs)).
 
 go :-
-    lcs("1234", "12245334", "1234").
+    lcs("1234", "12245334", "1234"),
+
+    % assume vowels/3 awards 0.5 points to vowel matches
+    % and 0 points to all other letters.
+    lcs(vowels, "moose", "mouse", [0'o-0'o, 0'o-0'u, 0'e-0'e], 1.5).
 ==
 
 ---+ Description
 
-Calculate the longest common subsequence of two lists.  This can be
-done by considering equal elements as common.  It can also be done
-by considering similar elements as common.  In the latter case, the
-developer defines a similarity metric for two arbitrary elements.
+Calculate a longest common subsequence for two lists. Two elements are
+considered common if they are equal.
+
+One can also provide a meta-predicate to perform comparisons. This
+predicate calculates a similarity score for two elements. The
+subsequence with the highest total similarity is the LCS.
+
+Source code available and pull requests accepted on GitHub:
+https://github.com/mndrix/lcs
+
 
 @author Michael Hendricks <michael@ndrix.org>
 @license BSD
